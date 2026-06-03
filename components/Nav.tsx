@@ -35,13 +35,13 @@ export default function Nav() {
     }}>
       {/* Logo */}
       <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#fff' }}>
           <span style={{ fontSize: 22 }}>⚗</span>
           <div>
             <div style={{ color: '#fff', fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>AasaMedChem</div>
             <div style={{ color: '#7dd3fc', fontSize: 11 }}>{isAdmin ? 'Admin Panel' : 'Seller Portal'}</div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Nav links */}

@@ -132,13 +132,13 @@ export default function ProductDetailClient({ product, user }: Props) {
       const mlQty = convVolUnit === 'mL' ? inputVal : inputVal * 1000;
       const gWeight = mlQty * d;
       const outputVal = convWtUnit === 'g' ? gWeight : gWeight / 1000;
-      return `${inputVal} ${convVolUnit} = ${outputVal.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${convWtUnit}`;
+      return `${inputVal} ${convVolUnit} = ${outputVal.toLocaleString('en-US', { maximumFractionDigits: 3 })} ${convWtUnit}`;
     } else {
       // g -> mL
       const gQty = convWtUnit === 'g' ? inputVal : inputVal * 1000;
       const mlVol = gQty / d;
       const outputVal = convVolUnit === 'mL' ? mlVol : mlVol / 1000;
-      return `${inputVal} ${convWtUnit} = ${outputVal.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${convVolUnit}`;
+      return `${inputVal} ${convWtUnit} = ${outputVal.toLocaleString('en-US', { maximumFractionDigits: 3 })} ${convVolUnit}`;
     }
   };
 
@@ -421,10 +421,10 @@ export default function ProductDetailClient({ product, user }: Props) {
                 {/* Conversion Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '6px 12px', fontSize: 11 }}>
                   {[
-                    { label: 'Kilograms', val: `${calculateMassConversions().kg.toLocaleString()} kg` },
-                    { label: 'Grams', val: `${calculateMassConversions().g.toLocaleString()} g` },
-                    { label: 'Milligrams', val: `${calculateMassConversions().mg.toLocaleString()} mg` },
-                    { label: 'Micrograms', val: `${calculateMassConversions().mcg.toLocaleString()} mcg` },
+                    { label: 'Kilograms', val: `${calculateMassConversions().kg.toLocaleString('en-US')} kg` },
+                    { label: 'Grams', val: `${calculateMassConversions().g.toLocaleString('en-US')} g` },
+                    { label: 'Milligrams', val: `${calculateMassConversions().mg.toLocaleString('en-US')} mg` },
+                    { label: 'Micrograms', val: `${calculateMassConversions().mcg.toLocaleString('en-US')} mcg` },
                     { label: 'Pounds', val: `${calculateMassConversions().lbs.toFixed(3)} lbs` },
                     { label: 'Ounces', val: `${calculateMassConversions().oz.toFixed(2)} oz` }
                   ].map((item, idx) => (
@@ -457,7 +457,7 @@ export default function ProductDetailClient({ product, user }: Props) {
                 {/* Output List */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '6px 12px', fontSize: 11 }}>
                   {[
-                    { label: 'Individual Count', val: `${calculateCountConversions().units.toLocaleString()} units` },
+                    { label: 'Individual Count', val: `${calculateCountConversions().units.toLocaleString('en-US')} units` },
                     { label: 'Packs (1,000s)', val: `${calculateCountConversions().packs.toFixed(2)} packs` },
                     { label: 'Boxes (10,000s)', val: `${calculateCountConversions().boxes.toFixed(2)} boxes` },
                     { label: 'Cartons (50,000s)', val: `${calculateCountConversions().cartons.toFixed(2)} cartons` }
@@ -529,7 +529,7 @@ export default function ProductDetailClient({ product, user }: Props) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Available Stock</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: isLowStock ? '#d97706' : '#0369a1' }}>
-                  {stockNum.toLocaleString(undefined, { maximumFractionDigits: 2 })} {product.base_unit}
+                  {stockNum.toLocaleString('en-US', { maximumFractionDigits: 2 })} {product.base_unit}
                 </span>
               </div>
               <div style={{ height: 8, background: '#cbd5e1', borderRadius: 4, overflow: 'hidden' }}>
@@ -630,7 +630,7 @@ export default function ProductDetailClient({ product, user }: Props) {
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#64748b', marginTop: 4 }}>
                   <span>1 {selectedUnit}</span>
-                  <span>{Math.round(Math.min(stockInDisplayUnit, 10000)).toLocaleString()} {selectedUnit} {stockInDisplayUnit > 10000 ? '+' : ''}</span>
+                  <span>{Math.round(Math.min(stockInDisplayUnit, 10000)).toLocaleString('en-US')} {selectedUnit} {stockInDisplayUnit > 10000 ? '+' : ''}</span>
                 </div>
               </div>
 

@@ -377,7 +377,7 @@ export default function PublicCatalogueClient({ products, user }: Props) {
                       </div>
                       
                       <span style={{ fontSize: 11, color: '#64748b' }}>
-                        Stock: {Number(p.stock_quantity).toLocaleString()} {p.base_unit}
+                        Stock: {Number(p.stock_quantity).toLocaleString('en-US')} {p.base_unit}
                       </span>
                     </div>
 

@@ -284,7 +284,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product,
           <span style={{ color: '#94a3b8' }}> / {unit}</span>
         </div>
         <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-          Stock: {stockInUnit.toLocaleString(undefined, { maximumFractionDigits: 3 })} {unit}
+          Stock: {stockInUnit.toLocaleString('en-US', { maximumFractionDigits: 3 })} {unit}
         </div>
       </div>
 

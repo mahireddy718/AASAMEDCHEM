@@ -115,7 +115,7 @@ export default function AdminOrdersClient({ initialOrders }: { initialOrders: Or
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>{item.product_name}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 12 }}>
                   <div><span style={{ color: '#64748b' }}>Ordered:</span> {formatQuantity(item.ordered_quantity, item.ordered_unit)}</div>
-                  <div><span style={{ color: '#64748b' }}>Base qty:</span> {Number(item.base_quantity).toLocaleString()} {/* we can derive unit */}</div>
+                  <div><span style={{ color: '#64748b' }}>Base qty:</span> {Number(item.base_quantity).toLocaleString('en-US')} {/* we can derive unit */}</div>
                   <div><span style={{ color: '#64748b' }}>Unit price:</span> {paiseToCurrency(item.unit_price_paise)}/base</div>
                   <div><span style={{ color: '#64748b' }}>Line total:</span> <strong>{paiseToCurrency(item.total_paise)}</strong></div>
                 </div>

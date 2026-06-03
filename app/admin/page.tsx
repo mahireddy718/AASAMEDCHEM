@@ -91,7 +91,7 @@ export default async function AdminDashboard() {
                   <div style={{ color: '#94a3b8', fontSize: 12 }}>{p.sku}</div>
                 </div>
                 <div style={{ background: '#fee2e2', color: '#991b1b', padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
-                  {Number(p.stock_quantity).toLocaleString()} {p.base_unit}
+                  {Number(p.stock_quantity).toLocaleString('en-US')} {p.base_unit}
                 </div>
               </div>
             ))}

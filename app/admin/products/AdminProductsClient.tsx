@@ -91,7 +91,7 @@ export default function AdminProductsClient({ initialProducts }: Props) {
                 <td style={tdStyle}><span style={tagStyle}>{p.category}</span></td>
                 <td style={tdStyle}>{p.dimension}</td>
                 <td style={tdStyle}>{p.base_unit}</td>
-                <td style={tdStyle}>{Number(p.stock_quantity).toLocaleString()} {p.base_unit}</td>
+                <td style={tdStyle}>{Number(p.stock_quantity).toLocaleString('en-US')} {p.base_unit}</td>
                 <td style={{ ...tdStyle, fontWeight: 700, color: '#0369a1' }}>{paiseToCurrency(p.price_per_base_unit_paise)}</td>
                 <td style={tdStyle}>
                   <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: p.is_active ? '#d1fae5' : '#f1f5f9', color: p.is_active ? '#065f46' : '#94a3b8', fontWeight: 600 }}>

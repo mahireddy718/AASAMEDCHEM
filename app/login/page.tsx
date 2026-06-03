@@ -27,11 +27,14 @@ export default function LoginPage() {
 
   return (
     <div style={{
+      position: 'relative',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'row',
       color: '#fff',
-      background: '#0c4a6e',
+      backgroundImage: 'url("/pharmaceutical_banner.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -96,27 +99,25 @@ export default function LoginPage() {
         }
       `}} />
 
+      {/* Dark premium overlay covering the entire page */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(135deg, rgba(12, 74, 110, 0.9) 0%, rgba(15, 23, 42, 0.94) 100%)',
+        zIndex: 1
+      }} />
+
       {/* Left Panel - Corporate Showcase (Hidden on Mobile) */}
       <div className="left-panel" style={{
         width: '50%',
         position: 'relative',
-        backgroundImage: 'url("/pharmaceutical_banner.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        zIndex: 2,
         padding: '60px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+        background: 'transparent'
       }}>
-        {/* Dark overlay */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(135deg, rgba(12, 74, 110, 0.88) 0%, rgba(15, 23, 42, 0.94) 100%)',
-          zIndex: 1
-        }} />
-
         {/* Content */}
         <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
@@ -170,12 +171,13 @@ export default function LoginPage() {
       {/* Right Panel - Form (Centered glass container) */}
       <div className="right-panel" style={{
         width: '50%',
-        background: 'linear-gradient(135deg, #072e44 0%, #090d16 100%)',
+        position: 'relative',
+        zIndex: 2,
+        background: 'rgba(15, 23, 42, 0.4)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '40px 20px',
-        position: 'relative'
       }}>
         {/* Glassmorphic card container */}
         <div style={{

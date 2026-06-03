@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { paiseToCurrency, DIMENSION_UNITS, UNIT_LABELS } from '@/lib/units';
 import type { Product, Dimension } from '@/lib/db';
+import { getProductImage } from '@/app/PublicCatalogueClient';
 
 interface Props { initialProducts: Product[] }
 
@@ -59,7 +60,7 @@ export default function AdminProductsClient({ initialProducts }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f8fafc' }}>
-              {['SKU', 'Name', 'Category', 'Dimension', 'Base Unit', 'Stock', 'Price / Base Unit', 'Status', ''].map(h => (
+              {['', 'SKU', 'Name', 'Category', 'Dimension', 'Base Unit', 'Stock', 'Price / Base Unit', 'Status', ''].map(h => (
                 <th key={h} style={thStyle}>{h}</th>
               ))}
             </tr>
@@ -67,6 +68,11 @@ export default function AdminProductsClient({ initialProducts }: Props) {
           <tbody>
             {filtered.map(p => (
               <tr key={p.id} style={{ borderTop: '1px solid #f1f5f9' }}>
+                <td style={{ ...tdStyle, paddingRight: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 6, overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+                    <img src={getProductImage(p.category, p.sku)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                </td>
                 <td style={tdStyle}>
                   <Link href={`/products/${p.id}`} style={{ textDecoration: 'none' }}>
                     <code style={{ fontSize: 12, color: '#0369a1', cursor: 'pointer' }}>{p.sku}</code>

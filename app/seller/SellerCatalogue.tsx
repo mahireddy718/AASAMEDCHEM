@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { paiseToCurrency, pricePerDisplayUnit, computeLineTotalPaise, DIMENSION_UNITS, UNIT_LABELS, formatQuantity, fromBaseQuantity } from '@/lib/units';
 import type { Product, Unit } from '@/lib/db';
+import { getProductImage } from '@/app/PublicCatalogueClient';
 
 interface CartItem {
   product: Product;
@@ -238,6 +239,10 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product,
       onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)')}
       onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
     >
+      {/* Live Product Image */}
+      <div style={{ height: 130, overflow: 'hidden', background: '#f8fafc' }}>
+        <img src={getProductImage(product.category, product.sku)} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
       {/* Card header */}
       <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #f1f5f9' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

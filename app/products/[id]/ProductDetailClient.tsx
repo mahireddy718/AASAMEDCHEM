@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import Nav from '@/components/Nav';
 import {
   paiseToCurrency,
@@ -16,6 +15,7 @@ import {
   formatQuantity
 } from '@/lib/units';
 import type { Product, Unit, Role } from '@/lib/db';
+import { getProductImage } from '@/app/PublicCatalogueClient';
 
 interface Props {
   product: Product;
@@ -26,6 +26,15 @@ interface Props {
     role: Role;
   } | null;
 }
+
+// Density preset maps for solvents (g/mL)
+const DENSITY_PRESETS: Record<string, number> = {
+  'ETOH-001': 0.789, // Ethanol
+  'IPA-001': 0.786,  // Isopropyl Alcohol
+  'H2O-001': 1.000,  // Purified Water
+  'GLYC-001': 1.261, // Glycerin
+  'SALI-001': 1.005, // Saline Solution
+};
 
 export default function ProductDetailClient({ product, user }: Props) {
   const router = useRouter();
@@ -55,117 +64,21 @@ export default function ProductDetailClient({ product, user }: Props) {
     Number(product.price_per_base_unit_paise)
   );
 
-  // SVG selector based on category
-  const renderChemicalIllustration = () => {
-    const categoryLower = product.category.toLowerCase();
-    if (categoryLower.includes('api')) {
-      return (
-        <svg viewBox="0 0 100 100" style={{ width: '100%', maxHeight: 220, filter: 'drop-shadow(0 8px 16px rgba(14, 165, 233, 0.2))' }}>
-          <defs>
-            <linearGradient id="flaskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#38bdf8" />
-              <stop offset="100%" stopColor="#0284c7" />
-            </linearGradient>
-            <linearGradient id="liquidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#0369a1" stopOpacity="0.9" />
-            </linearGradient>
-          </defs>
-          {/* Flask Body */}
-          <path d="M42 25 L42 12 L38 12 L38 8 L62 8 L62 12 L58 12 L58 25 L78 68 C82 76, 78 85, 70 85 L30 85 C22 85, 18 76, 22 68 Z" fill="none" stroke="url(#flaskGrad)" strokeWidth="3" />
-          {/* Liquid level */}
-          <path d="M29 62 C35 60, 45 64, 55 60 C65 57, 71 62, 71 62 L75 72 C76 74, 75 78, 72 78 L28 78 C25 78, 24 74, 25 72 Z" fill="url(#liquidGrad)" />
-          {/* Bubbles */}
-          <circle cx="38" cy="50" r="3" fill="#38bdf8" opacity="0.6">
-            <animate attributeName="cy" values="70;30" dur="2.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.8;0" dur="2.5s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="52" cy="40" r="2.5" fill="#bae6fd" opacity="0.7">
-            <animate attributeName="cy" values="70;20" dur="3s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.9;0" dur="3s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="62" cy="55" r="2" fill="#38bdf8" opacity="0.5">
-            <animate attributeName="cy" values="70;25" dur="2s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.7;0" dur="2s" repeatCount="indefinite" />
-          </circle>
-          {/* Measurement marks */}
-          <line x1="50" y1="35" x2="55" y2="35" stroke="#bae6fd" strokeWidth="1.5" opacity="0.5" />
-          <line x1="48" y1="48" x2="56" y2="48" stroke="#bae6fd" strokeWidth="1.5" opacity="0.5" />
-          <line x1="45" y1="61" x2="55" y2="61" stroke="#bae6fd" strokeWidth="1.5" opacity="0.5" />
-        </svg>
-      );
-    } else if (categoryLower.includes('solvent')) {
-      return (
-        <svg viewBox="0 0 100 100" style={{ width: '100%', maxHeight: 220, filter: 'drop-shadow(0 8px 16px rgba(20, 184, 166, 0.2))' }}>
-          <defs>
-            <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#2dd4bf" />
-              <stop offset="100%" stopColor="#0d9488" />
-            </linearGradient>
-            <linearGradient id="solLiquidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#0f766e" stopOpacity="0.9" />
-            </linearGradient>
-          </defs>
-          {/* Bottle Structure */}
-          <path d="M35 15 L65 15 L65 24 L72 28 L72 82 C72 85, 69 88, 66 88 L34 88 C31 88, 28 85, 28 82 L28 28 L35 24 Z" fill="none" stroke="url(#bottleGrad)" strokeWidth="3" />
-          {/* Cap */}
-          <rect x="42" y="7" width="16" height="8" rx="2" fill="#0d9488" />
-          {/* Liquid level */}
-          <path d="M30 45 Q35 48 40 45 T50 45 T60 45 T70 45 L70 82 C70 84, 68 86, 66 86 L34 86 C32 86, 30 84, 30 82 Z" fill="url(#solLiquidGrad)" />
-          {/* Lab Label */}
-          <rect x="36" y="52" width="28" height="20" rx="1.5" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="1" />
-          <line x1="40" y1="58" x2="60" y2="58" stroke="#94a3b8" strokeWidth="1.5" />
-          <line x1="40" y1="64" x2="54" y2="64" stroke="#cbd5e1" strokeWidth="1" />
-        </svg>
-      );
-    } else if (categoryLower.includes('excipient')) {
-      return (
-        <svg viewBox="0 0 100 100" style={{ width: '100%', maxHeight: 220, filter: 'drop-shadow(0 8px 16px rgba(139, 92, 246, 0.2))' }}>
-          <defs>
-            <linearGradient id="capsuleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#c084fc" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-            <linearGradient id="capsuleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ddd6fe" />
-              <stop offset="100%" stopColor="#a78bfa" />
-            </linearGradient>
-          </defs>
-          {/* Pill Capsule at 45 degrees */}
-          <g transform="rotate(45 50 50)">
-            {/* Left/Bottom Half */}
-            <path d="M32 32 L32 50 C32 60, 40 68, 50 68 C60 68, 68 60, 68 50 L68 32 Z" fill="url(#capsuleGrad1)" />
-            {/* Right/Top Half */}
-            <path d="M32 32 L32 14 C32 4, 40 -4, 50 -4 C60 -4, 68 4, 68 14 L68 32 Z" fill="url(#capsuleGrad2)" />
-            {/* Glossy Reflection */}
-            <path d="M38 10 C38 6, 42 2, 48 2" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-          </g>
-        </svg>
-      );
-    } else {
-      return (
-        <svg viewBox="0 0 100 100" style={{ width: '100%', maxHeight: 220, filter: 'drop-shadow(0 8px 16px rgba(100, 116, 139, 0.2))' }}>
-          <defs>
-            <linearGradient id="atomGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#94a3b8" />
-              <stop offset="100%" stopColor="#475569" />
-            </linearGradient>
-          </defs>
-          {/* Nucleus */}
-          <circle cx="50" cy="50" r="8" fill="#475569" />
-          {/* Orbiting Rings */}
-          <ellipse cx="50" cy="50" rx="36" ry="12" fill="none" stroke="url(#atomGrad)" strokeWidth="2.5" transform="rotate(30 50 50)" />
-          <ellipse cx="50" cy="50" rx="36" ry="12" fill="none" stroke="url(#atomGrad)" strokeWidth="2.5" transform="rotate(90 50 50)" />
-          <ellipse cx="50" cy="50" rx="36" ry="12" fill="none" stroke="url(#atomGrad)" strokeWidth="2.5" transform="rotate(150 50 50)" />
-          {/* Electrons */}
-          <circle cx="20" cy="33" r="3.5" fill="#64748b" />
-          <circle cx="80" cy="67" r="3.5" fill="#64748b" />
-          <circle cx="50" cy="14" r="3.5" fill="#64748b" />
-        </svg>
-      );
-    }
-  };
+  // --- Advanced Conversion Calculator State ---
+  const initialDensity = DENSITY_PRESETS[product.sku] || 1.0;
+  const [density, setDensity] = useState<number>(initialDensity);
+  const [convDirection, setConvDirection] = useState<'volToWt' | 'wtToVol'>('volToWt');
+  const [convInput, setConvInput] = useState<number>(1000);
+  const [convVolUnit, setConvVolUnit] = useState<'mL' | 'L'>('mL');
+  const [convWtUnit, setConvWtUnit] = useState<'g' | 'kg'>('g');
+
+  const [weightInput, setWeightInput] = useState<number>(1000);
+  const [weightUnit, setWeightUnit] = useState<'g' | 'kg'>('g');
+
+  const [countInput, setCountInput] = useState<number>(1000);
+
+  // Live picture url
+  const livePic = getProductImage(product.category, product.sku);
 
   // Cart helper (localStorage)
   const handleAddToCart = () => {
@@ -208,6 +121,49 @@ export default function ProductDetailClient({ product, user }: Props) {
     } else if (e.target.value === '') {
       setQty(0);
     }
+  };
+
+  // Density solver outputs
+  const calculateDensityConversion = () => {
+    const d = density;
+    const inputVal = convInput;
+    if (convDirection === 'volToWt') {
+      // mL -> g
+      const mlQty = convVolUnit === 'mL' ? inputVal : inputVal * 1000;
+      const gWeight = mlQty * d;
+      const outputVal = convWtUnit === 'g' ? gWeight : gWeight / 1000;
+      return `${inputVal} ${convVolUnit} = ${outputVal.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${convWtUnit}`;
+    } else {
+      // g -> mL
+      const gQty = convWtUnit === 'g' ? inputVal : inputVal * 1000;
+      const mlVol = gQty / d;
+      const outputVal = convVolUnit === 'mL' ? mlVol : mlVol / 1000;
+      return `${inputVal} ${convWtUnit} = ${outputVal.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${convVolUnit}`;
+    }
+  };
+
+  // Mass unit outputs
+  const calculateMassConversions = () => {
+    const inputInGrams = weightUnit === 'g' ? weightInput : weightInput * 1000;
+    return {
+      mcg: inputInGrams * 1000000,
+      mg: inputInGrams * 1000,
+      g: inputInGrams,
+      kg: inputInGrams / 1000,
+      lbs: inputInGrams / 453.59237,
+      oz: inputInGrams / 28.34952
+    };
+  };
+
+  // Count unit outputs
+  const calculateCountConversions = () => {
+    const units = countInput;
+    return {
+      units,
+      packs: units / 1000,
+      boxes: units / 10000,
+      cartons: units / 50000
+    };
   };
 
   // Layout selection based on logged in status
@@ -282,35 +238,32 @@ export default function ProductDetailClient({ product, user }: Props) {
         overflow: 'hidden',
         marginBottom: 32
       }}>
-        {/* Left Column - Image/SVG illustration & Chemical info */}
+        {/* Left Column - Image & Chemical info & Advanced Converter */}
         <div style={{
           padding: 32,
           background: '#f8fafc',
           borderRight: '1px solid #e2e8f0',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center'
+          alignItems: 'center'
         }}>
+          {/* Live Product Image Container */}
           <div style={{
             background: '#ffffff',
             borderRadius: 16,
-            padding: '24px 32px',
             width: '100%',
             maxWidth: 320,
             boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
             border: '1px solid #f1f5f9',
             marginBottom: 24,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: 260
+            height: 250,
+            overflow: 'hidden',
+            position: 'relative'
           }}>
-            {renderChemicalIllustration()}
+            <img src={livePic} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
 
-          <div style={{ width: '100%', maxWidth: 360 }}>
+          <div style={{ width: '100%', maxWidth: 360, marginBottom: 28 }}>
             <span style={{
               background: '#e0f2fe',
               color: '#0369a1',
@@ -349,6 +302,174 @@ export default function ProductDetailClient({ product, user }: Props) {
                 <strong style={{ color: '#0f172a', textTransform: 'capitalize' }}>{product.dimension}</strong>
               </div>
             </div>
+          </div>
+
+          {/* Advanced Metric Conversion Assistant Card */}
+          <div style={{
+            width: '100%',
+            maxWidth: 360,
+            background: '#ffffff',
+            borderRadius: 14,
+            border: '1px solid #bae6fd',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
+            padding: 20
+          }}>
+            <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: '#0284c7', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🎛️ Dynamic Metric Conversion
+            </h3>
+
+            {/* Render Solvents Density Calculator */}
+            {product.dimension === 'volume' && (
+              <div>
+                <span style={{ display: 'block', fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>
+                  WEIGHT-VOLUME DENSITY SOLVER
+                </span>
+                
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                  <button
+                    onClick={() => setConvDirection('volToWt')}
+                    style={{
+                      flex: 1, padding: '5px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid',
+                      background: convDirection === 'volToWt' ? '#e0f2fe' : '#fff',
+                      color: convDirection === 'volToWt' ? '#0369a1' : '#64748b',
+                      borderColor: convDirection === 'volToWt' ? '#0284c7' : '#cbd5e1'
+                    }}
+                  >
+                    Vol → Wt
+                  </button>
+                  <button
+                    onClick={() => setConvDirection('wtToVol')}
+                    style={{
+                      flex: 1, padding: '5px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', border: '1px solid',
+                      background: convDirection === 'wtToVol' ? '#e0f2fe' : '#fff',
+                      color: convDirection === 'wtToVol' ? '#0369a1' : '#64748b',
+                      borderColor: convDirection === 'wtToVol' ? '#0284c7' : '#cbd5e1'
+                    }}
+                  >
+                    Wt → Vol
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <input
+                      type="number"
+                      value={convInput}
+                      onChange={e => setConvInput(parseFloat(e.target.value) || 0)}
+                      style={{ width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid #cbd5e1', borderRadius: 6, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    {convDirection === 'volToWt' ? (
+                      <select value={convVolUnit} onChange={e => setConvVolUnit(e.target.value as any)} style={{ width: '100%', padding: '6px 4px', fontSize: 13, border: '1px solid #cbd5e1', borderRadius: 6 }}>
+                        <option value="mL">Milliliters (mL)</option>
+                        <option value="L">Liters (L)</option>
+                      </select>
+                    ) : (
+                      <select value={convWtUnit} onChange={e => setConvWtUnit(e.target.value as any)} style={{ width: '100%', padding: '6px 4px', fontSize: 13, border: '1px solid #cbd5e1', borderRadius: 6 }}>
+                        <option value="g">Grams (g)</option>
+                        <option value="kg">Kilograms (kg)</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                {/* Density preset slider */}
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+                    <span>Liquid Density</span>
+                    <strong>{density.toFixed(3)} g/mL</strong>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.700"
+                    max="1.500"
+                    step="0.001"
+                    value={density}
+                    onChange={e => setDensity(parseFloat(e.target.value))}
+                    style={{ width: '100%', cursor: 'pointer' }}
+                  />
+                </div>
+
+                {/* Output display */}
+                <div style={{ background: '#f0f9ff', padding: '10px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0369a1', textAlign: 'center', border: '1px solid #bae6fd' }}>
+                  {calculateDensityConversion()}
+                </div>
+              </div>
+            )}
+
+            {/* Render Weight/API Mass conversions */}
+            {product.dimension === 'weight' && (
+              <div>
+                <span style={{ display: 'block', fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>
+                  COMPREHENSIVE MASS CONVERTER
+                </span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 8, marginBottom: 14 }}>
+                  <input
+                    type="number"
+                    value={weightInput}
+                    onChange={e => setWeightInput(parseFloat(e.target.value) || 0)}
+                    style={{ padding: '6px 8px', fontSize: 13, border: '1px solid #cbd5e1', borderRadius: 6, outline: 'none' }}
+                  />
+                  <select value={weightUnit} onChange={e => setWeightUnit(e.target.value as any)} style={{ padding: '6px 4px', fontSize: 13, border: '1px solid #cbd5e1', borderRadius: 6 }}>
+                    <option value="g">Grams (g)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                  </select>
+                </div>
+
+                {/* Conversion Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '6px 12px', fontSize: 11 }}>
+                  {[
+                    { label: 'Kilograms', val: `${calculateMassConversions().kg.toLocaleString()} kg` },
+                    { label: 'Grams', val: `${calculateMassConversions().g.toLocaleString()} g` },
+                    { label: 'Milligrams', val: `${calculateMassConversions().mg.toLocaleString()} mg` },
+                    { label: 'Micrograms', val: `${calculateMassConversions().mcg.toLocaleString()} mcg` },
+                    { label: 'Pounds', val: `${calculateMassConversions().lbs.toFixed(3)} lbs` },
+                    { label: 'Ounces', val: `${calculateMassConversions().oz.toFixed(2)} oz` }
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ display: 'contents' }}>
+                      <span style={{ color: '#64748b' }}>{item.label}</span>
+                      <strong style={{ color: '#334155', textAlign: 'right' }}>{item.val}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Render Capsules count conversions */}
+            {product.dimension === 'count' && (
+              <div>
+                <span style={{ display: 'block', fontSize: 11, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>
+                  BULK PACKAGING CALCULATOR
+                </span>
+
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 10, color: '#64748b', marginBottom: 4 }}>Quantity (units)</label>
+                  <input
+                    type="number"
+                    value={countInput}
+                    onChange={e => setCountInput(parseFloat(e.target.value) || 0)}
+                    style={{ width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid #cbd5e1', borderRadius: 6, outline: 'none' }}
+                  />
+                </div>
+
+                {/* Output List */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '6px 12px', fontSize: 11 }}>
+                  {[
+                    { label: 'Individual Count', val: `${calculateCountConversions().units.toLocaleString()} units` },
+                    { label: 'Packs (1,000s)', val: `${calculateCountConversions().packs.toFixed(2)} packs` },
+                    { label: 'Boxes (10,000s)', val: `${calculateCountConversions().boxes.toFixed(2)} boxes` },
+                    { label: 'Cartons (50,000s)', val: `${calculateCountConversions().cartons.toFixed(2)} cartons` }
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ display: 'contents' }}>
+                      <span style={{ color: '#64748b' }}>{item.label}</span>
+                      <strong style={{ color: '#334155', textAlign: 'right' }}>{item.val}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

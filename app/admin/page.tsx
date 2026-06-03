@@ -1,5 +1,6 @@
 import sql from '@/lib/db';
 import { paiseToCurrency } from '@/lib/units';
+import AdminDashboardCharts from './AdminDashboardCharts';
 
 async function getStats() {
   const [{ count: totalProducts }] = await sql`SELECT COUNT(*) FROM products WHERE is_active = true`;
@@ -16,7 +17,25 @@ async function getStats() {
     FROM products WHERE is_active = true AND stock_quantity < 1000
     ORDER BY stock_quantity ASC LIMIT 5
   `;
-  return { totalProducts, totalOrders, pendingOrders, revenue, recentOrders, lowStock };
+
+  // Dynamic Sales History Query
+  const salesHistory = await sql`
+    SELECT TO_CHAR(created_at, 'Mon DD') as date_label, COALESCE(SUM(total_paise),0) as revenue
+    FROM orders
+    WHERE status IN ('confirmed','fulfilled')
+    GROUP BY TO_CHAR(created_at, 'Mon DD'), DATE(created_at)
+    ORDER BY DATE(created_at) ASC LIMIT 7
+  `;
+
+  // Product Category Distribution Query
+  const categoryStats = await sql`
+    SELECT category, COUNT(*) as count
+    FROM products
+    WHERE is_active = true
+    GROUP BY category
+  `;
+
+  return { totalProducts, totalOrders, pendingOrders, revenue, recentOrders, lowStock, salesHistory, categoryStats };
 }
 
 export default async function AdminDashboard() {
@@ -34,7 +53,7 @@ export default async function AdminDashboard() {
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0c4a6e', margin: '0 0 6px' }}>Dashboard</h1>
       <p style={{ color: '#64748b', margin: '0 0 32px' }}>Welcome back, Admin</p>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
         {cards.map(c => (
           <div key={c.label} style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -50,6 +69,9 @@ export default async function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Dynamic Interactive SVG Charts */}
+      <AdminDashboardCharts salesData={stats.salesHistory} categoryData={stats.categoryStats} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Recent orders */}
@@ -76,7 +98,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Low stock */}
+        {/* Low stock alert */}
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Low Stock Alert</h2>
